@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolão Oficial - Loterias Caixa</title>
+
+    <style>
+        /* Responsividade (sem alteração) */
+        html {
+            font-size: 16px;
+        }
+        @media (max-width: 1200px) { html { font-size: 14px; } }
+        @media (max-width: 992px) { html { font-size: 12px; } .info-premio { flex-basis: 250px !important; } }
+        @media (max-width: 768px) { html { font-size: 10px; } .info-premio { flex-basis: 220px !important; } .bolao-detalhes { flex-direction: column; gap: 5px; } }
+
+        /* --- Reset e Fundo (sem alteração) --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            background-color: #0043C8;
+        }
+
+        /* --- Container principal (sem alteração) --- */
+        #container {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+        }
+
+        /* --- Cabeçalho da Caixa (sem alteração) --- */
+        header {
+            width: 100%; 
+            text-align: center;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+            color: #ffffff;
+            padding-top: 20px; 
+            box-sizing: border-box; 
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%),
+                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        header img {
+            max-width: 100%;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 5px 0 0 0;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* --- Animação Container (sem alteração) --- */
+        @keyframes slide-in-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* --- Caixa Central Transparente (sem alteração) --- */
+        #main-content {
+            width: 90%;
+            max-width: 1200px;
+            flex-grow: 1; 
+            background-color: rgba(255, 255, 255, 0.20); /* Branco 20% */
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slide-in-up 0.6s ease-out forwards;
+            margin-bottom: 20px; 
+        }
+
+        /* --- Scroller (Janela de rolagem) (sem alteração) --- */
+        #scroller-container {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #boloes-lista {
+            display: block;
+            width: 100%;
+        }
+
+        /* --- Animações (sem alteração) --- */
+        @keyframes scroll-up {
+            from { transform: translateY(0); }
+            to { transform: translateY(-50%); }
+        }
+        .scrolling { animation: scroll-up linear infinite; }
+
+        @keyframes slide-in-left {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-in-right {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes flip-in {
+            0% { opacity: 0; transform: translateY(-20px) rotateX(70deg); }
+            100% { opacity: 1; transform: translateY(0) rotateX(0); }
+        }
+
+        /* --- Layout do Cartão --- */
+        .cartao-bolao {
+            display: flex;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            opacity: 0; 
+        }
+        .slide-in-left { 
+            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+        }
+        .slide-in-right {
+            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+        }
+        .info-principal {
+            flex-grow: 1;
+            padding: 20px;
+            color: #111;
+            border-radius: 10px 0 0 10px;
+        }
+        
+        /* =============================================
+         * MUDANÇA 1: Título do bolão (cor e sombra)
+         * =============================================
+        */
+        .bolao-nome {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+            color: #ffffff; /* <-- Cor branca */
+            /* Sombra leve usando a cor de acento (herdada) */
+            text-shadow: 2px 2px 5px var(--cor-acento); 
+        }
+
+        .bolao-detalhes {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        .bolao-detalhes strong { font-weight: 700; }
+        .info-premio {
+            flex-basis: 300px;
+            flex-shrink: 0;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 0 10px 10px 0;
+            box-shadow: -8px 0px 15px rgba(0, 0, 0, 0.25);
+        }
+        .info-premio img { width: 150px; height: auto; margin-bottom: 10px; }
+        .premio-label { font-size: 1.2rem; font-weight: 300; }
+        .premio-valor {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            perspective: 300px;
+            display: block;
+        }
+        .premio-valor .char {
+            display: inline-block;
+            opacity: 0;
+            animation: flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        
+        <header>
+            <img src="https://mir-cdn.behance.net/v1/rendition/project_modules/max_158_webp/9082bf221455073.688a65570b90a.png" alt="Loterias Caixa">
+            <h1>Bolão Oficial</h1>
+        </header>
+
+        <div id="main-content">
+            <div id="scroller-container">
+                <div id="boloes-lista">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const urlApiBoloes = "https://script.google.com/macros/s/AKfycbxJKAMMTz_koSOHDVE_6OqD8yOORXSgMwb-J6KeevJiiJRaTl6s4ERSvXjneHRJ8IvFgQ/exec";
+        
+        const containerElement = document.getElementById("scroller-container");
+        const listaBoloesElement = document.getElementById("boloes-lista");
+        
+        function formatarData(dataISO) {
+            try {
+                const dataObj = new Date(dataISO);
+                const dia = String(dataObj.getUTCDate()).padStart(2, '0');
+                const mes = String(dataObj.getUTCMonth() + 1).padStart(2, '0'); 
+                const ano = String(dataObj.getUTCFullYear()).slice(-2);
+                return `${dia}/${mes}/${ano}`;
+            } catch (error) {
+                return dataISO; 
+            }
+        }
+
+        function gerarHtmlPremio(textoPremio) {
+            const delayInicial = 0.7;
+            const delayPorChar = 0.04; 
+
+            return textoPremio
+                .split('')
+                .map((char, index) => {
+                    const delayTotal = delayInicial + (index * delayPorChar);
+                    return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
+                })
+                .join('');
+        }
+
+        function criarCartaoBolao(bolao, index) {
+            
+            const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
+            const dataFormatada = formatarData(bolao.data_sorteio);
+            const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
+            
+            // Define as variáveis CSS que serão usadas pelos elementos filhos
+            const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
+
+
+            return `
+            <div class="cartao-bolao ${animacaoClass}" style="${styleVars}">
+                
+                <div class="info-principal" style="background-color: var(--cor-principal); border-left: 10px solid var(--cor-acento);">
+                    
+                    <h2 class="bolao-nome">${bolao.nome}</h2>
+
+                    <div class="bolao-detalhes">
+                        <span>Valor: <strong>${bolao.valor_cota}</strong></span>
+                        <span>Cotas: <strong>${bolao.cotas_disponiveis}</strong></span>
+                        <span>Sorteio: <strong>${dataFormatada}</strong></span>
+                    </div>
+                </div>
+                
+                <div class="info-premio" style="background-color: var(--cor-acento);">
+                    <img src="${bolao.logo_url}" alt="Logo ${bolao.nome}">
+                    <span class="premio-label">Último Sorteio</span>
+                    <span class="premio-valor">${htmlDoPremio}</span>
+                </div>
+
+            </div>
+            `;
+        }
+        
+        async function carregarBoloes() {
+            console.log("Buscando dados dos bolões...");
+            try {
+                const response = await fetch(urlApiBoloes);
+                const boloes = await response.json();
+
+                let htmlBoloes = "";
+                boloes.forEach((bolao, index) => {
+                    htmlBoloes += criarCartaoBolao(bolao, index);
+                });
+                
+                listaBoloesElement.innerHTML = htmlBoloes;
+                
+                listaBoloesElement.classList.remove('scrolling');
+                listaBoloesElement.style.animationDuration = '';
+
+                setTimeout(verificarRolagem, 800); 
+
+            } catch (error) {
+                console.error("Erro ao buscar dados da API:", error);
+                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro ao carregar os bolões.</p>";
+            }
+        }
+        
+        function verificarRolagem() {
+            const alturaContainer = containerElement.clientHeight;
+            const alturaLista = listaBoloesElement.scrollHeight;
+            
+            console.log("Verificando rolagem. Container:", alturaContainer, "Lista:", alturaLista);
+
+            if (alturaLista > alturaContainer) {
+                console.log("Conteúdo maior que a tela. Ativando rolagem.");
+                listaBoloesElement.innerHTML += listaBoloesElement.innerHTML;
+                const alturaOriginal = alturaLista;
+                const duracao = (alturaOriginal / 1000) * 25; 
+                listaBoloesElement.style.animationDuration = `${duracao}s`;
+                listaBoloesElement.classList.add('scrolling');
+                
+            } else {
+                console.log("Conteúdo cabe na tela. Centralizando.");
+                containerElement.style.display = 'flex';
+                containerElement.style.alignItems = 'center';
+                containerElement.style.justifyContent = 'center';
+            }
+        }
+
+        // --- Execução (Corrigido e sem alterações) ---
+        carregarBoloes(); 
+        setInterval(carregarBoloes, 300000); 
+
+    </script>
+</body>
+</html>
