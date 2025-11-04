@@ -6,7 +6,7 @@
     <title>Bolão Oficial - Loterias Caixa</title>
 
     <style>
-        /* Responsividade (sem alteração) */
+        /* Responsividade */
         html {
             font-size: 16px;
         }
@@ -14,7 +14,7 @@
         @media (max-width: 992px) { html { font-size: 12px; } .info-premio { flex-basis: 250px !important; } }
         @media (max-width: 768px) { html { font-size: 10px; } .info-premio { flex-basis: 220px !important; } .bolao-detalhes { flex-direction: column; gap: 5px; } }
 
-        /* --- Reset e Fundo (sem alteração) --- */
+        /* --- Reset e Fundo --- */
         body, html {
             margin: 0;
             padding: 0;
@@ -25,7 +25,7 @@
             background-color: #0043C8;
         }
 
-        /* --- Container principal (sem alteração) --- */
+        /* --- Container principal --- */
         #container {
             width: 100%;
             height: 100%;
@@ -35,7 +35,7 @@
             align-items: center; 
         }
 
-        /* --- Cabeçalho da Caixa (sem alteração) --- */
+        /* --- Cabeçalho da Caixa --- */
         header {
             width: 100%; 
             text-align: center;
@@ -52,7 +52,7 @@
         }
 
         header img {
-            max-width: 100%;
+            max-width: 180px;
         }
 
         header h1 {
@@ -63,13 +63,13 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* --- Animação Container (sem alteração) --- */
+        /* --- Animação Container --- */
         @keyframes slide-in-up {
             from { transform: translateY(100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* --- Caixa Central Transparente (sem alteração) --- */
+        /* --- Caixa Central Transparente --- */
         #main-content {
             width: 90%;
             max-width: 1200px;
@@ -85,7 +85,7 @@
             margin-bottom: 20px; 
         }
 
-        /* --- Scroller (Janela de rolagem) (sem alteração) --- */
+        /* --- Scroller (Janela de rolagem) --- */
         #scroller-container {
             flex-grow: 1;
             overflow: hidden;
@@ -97,7 +97,7 @@
             width: 100%;
         }
 
-        /* --- Animações (sem alteração) --- */
+        /* --- Animações --- */
         @keyframes scroll-up {
             from { transform: translateY(0); }
             to { transform: translateY(-50%); }
@@ -125,12 +125,18 @@
             margin-bottom: 25px;
             opacity: 0; 
         }
+        
+        /* =============================================
+         * MUDANÇA 1: Delay inicial dos cards removido (era 0.3s)
+         * =============================================
+        */
         .slide-in-left { 
-            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
         .slide-in-right {
-            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
+        
         .info-principal {
             flex-grow: 1;
             padding: 20px;
@@ -138,16 +144,11 @@
             border-radius: 10px 0 0 10px;
         }
         
-        /* =============================================
-         * MUDANÇA 1: Título do bolão (cor e sombra)
-         * =============================================
-        */
         .bolao-nome {
             font-size: 2.2rem;
             font-weight: 700;
             margin: 0 0 15px 0;
-            color: #ffffff; /* <-- Cor branca */
-            /* Sombra leve usando a cor de acento (herdada) */
+            color: #ffffff; 
             text-shadow: 2px 2px 5px var(--cor-acento); 
         }
 
@@ -191,30 +192,29 @@
 <body>
 
     <div id="container">
-        
         <header>
             <img src="https://mir-cdn.behance.net/v1/rendition/project_modules/max_158_webp/9082bf221455073.688a65570b90a.png" alt="Loterias Caixa">
             <h1>Bolão Oficial</h1>
         </header>
-
         <div id="main-content">
             <div id="scroller-container">
                 <div id="boloes-lista">
                     </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // Pega os parâmetros da URL (ex: ?api=...)
-const urlParams = new URLSearchParams(window.location.search);
-
-// Pega a URL da API que foi passada no parâmetro 'api'
-const urlApiBoloes = urlParams.get('api');
+        
+        // --- Variáveis Globais ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlApiBoloes = urlParams.get('api');
+        const CACHE_KEY = `boloes_data_${urlApiBoloes}`; // Chave de cache única por cliente
         
         const containerElement = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
+        
+        // --- Funções de Renderização (Helpers) ---
         
         function formatarData(dataISO) {
             try {
@@ -223,82 +223,125 @@ const urlApiBoloes = urlParams.get('api');
                 const mes = String(dataObj.getUTCMonth() + 1).padStart(2, '0'); 
                 const ano = String(dataObj.getUTCFullYear()).slice(-2);
                 return `${dia}/${mes}/${ano}`;
-            } catch (error) {
-                return dataISO; 
-            }
+            } catch (error) { return dataISO; }
         }
 
         function gerarHtmlPremio(textoPremio) {
-            const delayInicial = 0.7;
+            /* =============================================
+             * MUDANÇA: Delay do texto mais rápido (era 0.7s)
+             * =============================================
+            */
+            const delayInicial = 0.4; // Começa mais cedo
             const delayPorChar = 0.04; 
 
-            return textoPremio
-                .split('')
-                .map((char, index) => {
-                    const delayTotal = delayInicial + (index * delayPorChar);
-                    return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
-                })
-                .join('');
+            return textoPremio.split('').map((char, index) => {
+                const delayTotal = delayInicial + (index * delayPorChar);
+                return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
+            }).join('');
         }
 
         function criarCartaoBolao(bolao, index) {
-            
             const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
             const dataFormatada = formatarData(bolao.data_sorteio);
             const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
-            
-            // Define as variáveis CSS que serão usadas pelos elementos filhos
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
-
 
             return `
             <div class="cartao-bolao ${animacaoClass}" style="${styleVars}">
-                
                 <div class="info-principal" style="background-color: var(--cor-principal); border-left: 10px solid var(--cor-acento);">
-                    
                     <h2 class="bolao-nome">${bolao.nome}</h2>
-
                     <div class="bolao-detalhes">
                         <span>Valor: <strong>${bolao.valor_cota}</strong></span>
                         <span>Cotas: <strong>${bolao.cotas_disponiveis}</strong></span>
                         <span>Sorteio: <strong>${dataFormatada}</strong></span>
                     </div>
                 </div>
-                
                 <div class="info-premio" style="background-color: var(--cor-acento);">
                     <img src="${bolao.logo_url}" alt="Logo ${bolao.nome}">
                     <span class="premio-label">Último Sorteio</span>
                     <span class="premio-valor">${htmlDoPremio}</span>
                 </div>
-
-            </div>
-            `;
+            </div>`;
         }
         
+        /**
+         * =============================================
+         * MUDANÇA: Função 'renderizarBoloes'
+         * Esta função agora é separada para ser usada
+         * tanto pela API quanto pelo CACHE.
+         * =============================================
+         */
+        function renderizarBoloes(boloes) {
+            if (!boloes || boloes.length === 0) {
+                listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
+                return;
+            }
+            
+            let htmlBoloes = "";
+            boloes.forEach((bolao, index) => {
+                htmlBoloes += criarCartaoBolao(bolao, index);
+            });
+            
+            listaBoloesElement.innerHTML = htmlBoloes;
+            listaBoloesElement.classList.remove('scrolling');
+            listaBoloesElement.style.animationDuration = '';
+
+            // Espera a animação de "subida" (0.6s) terminar antes de checar a rolagem
+            setTimeout(verificarRolagem, 800);
+        }
+
+        /**
+         * =============================================
+         * MUDANÇA: Lógica de carregamento com Cache
+         * =============================================
+         */
         async function carregarBoloes() {
-            console.log("Buscando dados dos bolões...");
+            if (!urlApiBoloes) {
+                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro: API não definida na URL.</p>";
+                return;
+            }
+
             try {
-                const response = await fetch(urlApiBoloes);
+                // Tenta buscar dados novos (timeout de 10 segundos)
+                console.log("Buscando dados da API...");
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(urlApiBoloes, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error('Falha na resposta da API');
+
                 const boloes = await response.json();
-
-                let htmlBoloes = "";
-                boloes.forEach((bolao, index) => {
-                    htmlBoloes += criarCartaoBolao(bolao, index);
-                });
                 
-                listaBoloesElement.innerHTML = htmlBoloes;
+                // Sucesso! Renderiza e salva no cache
+                console.log("Dados carregados da API. Salvando no cache.");
+                renderizarBoloes(boloes);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(boloes));
                 
-                listaBoloesElement.classList.remove('scrolling');
-                listaBoloesElement.style.animationDuration = '';
-
-                setTimeout(verificarRolagem, 800); 
-
             } catch (error) {
-                console.error("Erro ao buscar dados da API:", error);
-                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro ao carregar os bolões.</p>";
+                // FALHA (Offline ou timeout)
+                console.warn("Falha ao buscar API. Tentando carregar do cache...", error.message);
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                
+                if (cachedData) {
+                    // Cache encontrado!
+                    console.log("Carregando dados do cache local.");
+                    const boloes = JSON.parse(cachedData);
+                    renderizarBoloes(boloes);
+                } else {
+                    // Sem internet E sem cache (primeira vez)
+                    console.error("Sem cache. Não foi possível carregar.");
+                    listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro ao carregar. Verifique a conexão.</p>";
+                }
             }
         }
         
+        /**
+         * =============================================
+         * MUDANÇA: Lógica de rolagem sem "piscar" (flicker)
+         * =============================================
+         */
         function verificarRolagem() {
             const alturaContainer = containerElement.clientHeight;
             const alturaLista = listaBoloesElement.scrollHeight;
@@ -307,7 +350,15 @@ const urlApiBoloes = urlParams.get('api');
 
             if (alturaLista > alturaContainer) {
                 console.log("Conteúdo maior que a tela. Ativando rolagem.");
-                listaBoloesElement.innerHTML += listaBoloesElement.innerHTML;
+                
+                // Pega todos os elementos de cartão já renderizados
+                const children = Array.from(listaBoloesElement.children);
+                
+                // Clona cada um e adiciona no final (MUITO mais rápido que innerHTML)
+                children.forEach(child => {
+                    listaBoloesElement.appendChild(child.cloneNode(true));
+                });
+                
                 const alturaOriginal = alturaLista;
                 const duracao = (alturaOriginal / 1000) * 25; 
                 listaBoloesElement.style.animationDuration = `${duracao}s`;
@@ -321,9 +372,9 @@ const urlApiBoloes = urlParams.get('api');
             }
         }
 
-        // --- Execução (Corrigido e sem alterações) ---
+        // --- Execução ---
         carregarBoloes(); 
-        setInterval(carregarBoloes, 300000); 
+        setInterval(carregarBoloes, 300000); // Tenta atualizar a cada 5 minutos
 
     </script>
 </body>
