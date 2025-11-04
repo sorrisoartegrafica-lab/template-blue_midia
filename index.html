@@ -126,10 +126,6 @@
             opacity: 0; 
         }
         
-        /* =============================================
-         * MUDANÇA 1: Delay inicial dos cards removido (era 0.3s)
-         * =============================================
-        */
         .slide-in-left { 
             animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
@@ -186,7 +182,6 @@
             opacity: 0;
             animation: flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
-
     </style>
 </head>
 <body>
@@ -228,10 +223,10 @@
 
         function gerarHtmlPremio(textoPremio) {
             /* =============================================
-             * MUDANÇA: Delay do texto mais rápido (era 0.7s)
+             * MUDANÇA: Delay do texto RÁPIDO
              * =============================================
             */
-            const delayInicial = 0.4; // Começa mais cedo
+            const delayInicial = 0.1; // Quase imediato
             const delayPorChar = 0.04; 
 
             return textoPremio.split('').map((char, index) => {
@@ -241,6 +236,7 @@
         }
 
         function criarCartaoBolao(bolao, index) {
+            // (Função sem alteração)
             const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
             const dataFormatada = formatarData(bolao.data_sorteio);
             const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
@@ -264,13 +260,6 @@
             </div>`;
         }
         
-        /**
-         * =============================================
-         * MUDANÇA: Função 'renderizarBoloes'
-         * Esta função agora é separada para ser usada
-         * tanto pela API quanto pelo CACHE.
-         * =============================================
-         */
         function renderizarBoloes(boloes) {
             if (!boloes || boloes.length === 0) {
                 listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
@@ -286,75 +275,77 @@
             listaBoloesElement.classList.remove('scrolling');
             listaBoloesElement.style.animationDuration = '';
 
-            // Espera a animação de "subida" (0.6s) terminar antes de checar a rolagem
-            setTimeout(verificarRolagem, 800);
+            /* =============================================
+             * MUDANÇA: Delay da rolagem RÁPIDO (era 800ms)
+             * =============================================
+            */
+            // Espera a animação de "subida" (0.6s) terminar
+            setTimeout(verificarRolagem, 650); 
         }
 
         /**
          * =============================================
-         * MUDANÇA: Lógica de carregamento com Cache
+         * MUDANÇA: Lógica "Cache-First" (Stale-While-Revalidate)
          * =============================================
          */
         async function carregarBoloes() {
             if (!urlApiBoloes) {
-                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro: API não definida na URL.</p>";
+                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro: API não definida.</p>";
                 return;
             }
 
-            try {
-                // Tenta buscar dados novos (timeout de 10 segundos)
-                console.log("Buscando dados da API...");
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                
-                const response = await fetch(urlApiBoloes, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error('Falha na resposta da API');
-
-                const boloes = await response.json();
-                
-                // Sucesso! Renderiza e salva no cache
-                console.log("Dados carregados da API. Salvando no cache.");
-                renderizarBoloes(boloes);
-                localStorage.setItem(CACHE_KEY, JSON.stringify(boloes));
-                
-            } catch (error) {
-                // FALHA (Offline ou timeout)
-                console.warn("Falha ao buscar API. Tentando carregar do cache...", error.message);
-                const cachedData = localStorage.getItem(CACHE_KEY);
-                
-                if (cachedData) {
-                    // Cache encontrado!
-                    console.log("Carregando dados do cache local.");
-                    const boloes = JSON.parse(cachedData);
+            // 1. Tenta carregar do cache IMEDIATAMENTE
+            const cachedDataString = localStorage.getItem(CACHE_KEY);
+            let cacheValido = false;
+            
+            if (cachedDataString) {
+                try {
+                    console.log("Carregando dados do cache local...");
+                    const boloes = JSON.parse(cachedDataString);
                     renderizarBoloes(boloes);
-                } else {
-                    // Sem internet E sem cache (primeira vez)
-                    console.error("Sem cache. Não foi possível carregar.");
-                    listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro ao carregar. Verifique a conexão.</p>";
+                    cacheValido = true;
+                } catch (e) {
+                    console.warn("Cache corrompido, limpando.");
+                    localStorage.removeItem(CACHE_KEY);
                 }
+            }
+
+            // 2. Em paralelo, busca atualização na rede
+            console.log("Buscando atualização na API...");
+            try {
+                const response = await fetch(urlApiBoloes);
+                if (!response.ok) throw new Error('Falha na resposta da API');
+                
+                const boloesNovos = await response.json();
+                const boloesNovosString = JSON.stringify(boloesNovos);
+
+                // Compara com o cache. Só atualiza a tela se for diferente.
+                if (boloesNovosString !== cachedDataString) {
+                    console.log("Novos dados encontrados. Atualizando tela e cache.");
+                    renderizarBoloes(boloesNovos); // Re-renderiza com dados novos
+                    localStorage.setItem(CACHE_KEY, boloesNovosString);
+                } else {
+                    console.log("Dados do cache já estão atualizados.");
+                }
+
+            } catch (error) {
+                console.warn("Falha ao buscar API (offline?).", error.message);
+                // Se falhou a rede, E o cache não era válido...
+                if (!cacheValido) {
+                    listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro de conexão. Sem cache.</p>";
+                }
+                // Se o cache era válido, não faz nada, deixa o cache na tela.
             }
         }
         
-        /**
-         * =============================================
-         * MUDANÇA: Lógica de rolagem sem "piscar" (flicker)
-         * =============================================
-         */
         function verificarRolagem() {
+            // (Função de rolagem sem "piscar" - sem alteração)
             const alturaContainer = containerElement.clientHeight;
             const alturaLista = listaBoloesElement.scrollHeight;
             
-            console.log("Verificando rolagem. Container:", alturaContainer, "Lista:", alturaLista);
-
             if (alturaLista > alturaContainer) {
                 console.log("Conteúdo maior que a tela. Ativando rolagem.");
-                
-                // Pega todos os elementos de cartão já renderizados
                 const children = Array.from(listaBoloesElement.children);
-                
-                // Clona cada um e adiciona no final (MUITO mais rápido que innerHTML)
                 children.forEach(child => {
                     listaBoloesElement.appendChild(child.cloneNode(true));
                 });
@@ -373,10 +364,9 @@
         }
 
         // --- Execução ---
-        carregarBoloes(); 
+        carregarBoloes(); // Carrega (cache-first) na primeira vez
         setInterval(carregarBoloes, 300000); // Tenta atualizar a cada 5 minutos
 
     </script>
 </body>
 </html>
-
