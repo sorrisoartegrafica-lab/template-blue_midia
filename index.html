@@ -207,7 +207,11 @@
     </div>
 
     <script>
-        const urlApiBoloes = "https://script.google.com/macros/s/AKfycbxJKAMMTz_koSOHDVE_6OqD8yOORXSgMwb-J6KeevJiiJRaTl6s4ERSvXjneHRJ8IvFgQ/exec";
+        // Pega os parâmetros da URL (ex: ?api=...)
+const urlParams = new URLSearchParams(window.location.search);
+
+// Pega a URL da API que foi passada no parâmetro 'api'
+const urlApiBoloes = urlParams.get('api');
         
         const containerElement = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
