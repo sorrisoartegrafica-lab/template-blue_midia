@@ -101,7 +101,7 @@
         }
 
         header img {
-            max-width: 180px;
+            max-width: 100%;
         }
 
         header h1 {
@@ -237,10 +237,10 @@
         const listaBoloesElement = document.getElementById("boloes-lista");
 
         /* =============================================
-         * MUDANÇA: Tempo mínimo da tela de ATENÇÃO
+         * MUDANÇA: Tempo FIXO da tela de ATENÇÃO
          * =============================================
         */
-        const MINIMUM_SPLASH_TIME = 2000; // 2 segundos (2000ms)
+        const SPLASH_TIME = 2000; // 2 segundos (2000ms)
         
         // --- Funções de Renderização (Helpers) ---
         
@@ -255,7 +255,6 @@
         }
 
         function criarCartaoBolao(bolao, index) {
-            // (Função simplificada)
             const dataFormatada = formatarData(bolao.data_sorteio);
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
 
@@ -280,10 +279,13 @@
         function showContent() {
             overlayElement.classList.add("hidden");
             containerElement.classList.add("loaded");
-            setTimeout(verificarRolagem, 50);
+            // Adicionamos um pequeno delay para garantir que o CSS 'loaded' foi aplicado
+            // antes de calcular a rolagem, o que corrige a "tremida".
+            setTimeout(verificarRolagem, 50); 
         }
         
-        function renderizarBoloes(boloes, onComplete) {
+        function renderizarBoloes(boloes) {
+            // Esta função SÓ renderiza o HTML, não mostra na tela
             if (!boloes || boloes.length === 0) {
                 listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
             } else {
@@ -293,13 +295,10 @@
                 });
                 listaBoloesElement.innerHTML = htmlBoloes;
             }
-            onComplete();
         }
 
         // --- Lógica "Cache-First" ---
         async function carregarBoloes() {
-            const startTime = Date.now();
-
             if (!urlApiBoloes) {
                 overlayElement.innerHTML = "<h2>ERRO</h2><p>Erro de configuração: A API não foi definida na URL.</p>";
                 return;
@@ -312,29 +311,14 @@
             const cachedDataString = localStorage.getItem(CACHE_KEY);
             if (cachedDataString) {
                 try {
-                    console.log("Cache encontrado. Usando cache.");
+                    console.log("Cache encontrado. Renderizando cache.");
                     dadosParaRenderizar = JSON.parse(cachedDataString);
+                    renderizarBoloes(dadosParaRenderizar); // Renderiza por trás dos panos
                     cacheValido = true;
                 } catch (e) { console.warn("Cache corrompido."); }
             }
 
-            // 2. Função "callback"
-            const onDataReady = (dadosFinais) => {
-                renderizarBoloes(dadosFinais, () => {
-                    const elapsedTime = Date.now() - startTime;
-                    const remainingTime = MINIMUM_SPLASH_TIME - elapsedTime;
-                    
-                    if (remainingTime > 0) {
-                        console.log(`Dados prontos. Aguardando ${remainingTime}ms para fechar splash.`);
-                        setTimeout(showContent, remainingTime);
-                    } else {
-                        console.log("API demorou, mostrando conteúdo imediatamente.");
-                        showContent();
-                    }
-                });
-            };
-
-            // 3. Tenta buscar na rede (em paralelo)
+            // 2. Tenta buscar na rede (em paralelo)
             try {
                 console.log("Buscando atualização na API...");
                 const response = await fetch(urlApiBoloes);
@@ -343,19 +327,23 @@
                 const boloesNovos = await response.json();
                 const boloesNovosString = JSON.stringify(boloesNovos);
 
-                console.log("Dados novos da API recebidos.");
-                localStorage.setItem(CACHE_KEY, boloesNovosString);
-                dadosParaRenderizar = boloesNovos;
+                // Compara com o cache. Só re-renderiza se for diferente.
+                if (boloesNovosString !== cachedDataString) {
+                    console.log("Novos dados encontrados. Renderizando dados da API.");
+                    localStorage.setItem(CACHE_KEY, boloesNovosString);
+                    renderizarBoloes(boloesNovos); // Re-renderiza por trás dos panos
+                } else {
+                    console.log("Dados do cache já estão atualizados.");
+                }
 
             } catch (error) {
                 console.warn("Falha ao buscar API (offline?).", error.message);
                 if (!cacheValido) {
+                    // Se a API falhou E o cache falhou, mostra erro
                     overlayElement.innerHTML = "<h2>ERRO</h2><p>Erro de conexão. Não foi possível carregar os dados.</p>";
                 }
+                // Se o cache foi válido, o erro da API é irrelevante, o cache será exibido.
             }
-            
-            // 4. Renderiza o que tiver (cache ou dados novos)
-            onDataReady(dadosParaRenderizar);
             
             // 5. Inicia o loop de atualização em segundo plano
             setInterval(atualizarEmBackground, 300000); // A cada 5 minutos
@@ -412,6 +400,16 @@
         }
 
         // --- Execução ---
+        
+        /* =============================================
+         * MUDANÇA: LÓGICA DE INICIALIZAÇÃO
+         * =============================================
+        */
+        
+        // 1. Inicia o timer FIXO de 2 segundos
+        setTimeout(showContent, SPLASH_TIME);
+        
+        // 2. Inicia o carregamento de dados em paralelo
         carregarBoloes(); 
 
     </script>
