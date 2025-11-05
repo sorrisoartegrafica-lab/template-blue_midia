@@ -101,7 +101,7 @@
         }
 
         header img {
-            max-width: 100%;
+            max-width: 180px;
         }
 
         header h1 {
@@ -125,7 +125,6 @@
             flex-direction: column;
             overflow: hidden;
             margin-bottom: 20px; 
-            /* ANIMAÇÃO 'slide-in-up' REMOVIDA */
         }
 
         /* --- Scroller (Janela de rolagem) --- */
@@ -156,7 +155,6 @@
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 25px;
-            /* ANIMAÇÕES DE 'slide-in' REMOVIDAS */
         }
         
         .info-principal {
@@ -201,7 +199,6 @@
             font-size: 2.5rem;
             font-weight: 700;
             text-align: center;
-            /* ANIMAÇÃO 'flip-in' REMOVIDA */
         }
     </style>
 </head>
@@ -234,7 +231,7 @@
         const CACHE_KEY = `boloes_data_${urlApiBoloes}`;
         
         const overlayElement = document.getElementById("loading-overlay");
-        const containerElement = document.getElementById("container"); // MUDOU: Agora é o container principal
+        const containerElement = document.getElementById("container");
         
         const scrollerContainer = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
@@ -243,7 +240,7 @@
          * MUDANÇA: Tempo mínimo da tela de ATENÇÃO
          * =============================================
         */
-        const MINIMUM_SPLASH_TIME = 3000; // 3 segundos (3000ms)
+        const MINIMUM_SPLASH_TIME = 2000; // 2 segundos (2000ms)
         
         // --- Funções de Renderização (Helpers) ---
         
@@ -256,11 +253,9 @@
                 return `${dia}/${mes}/${ano}`;
             } catch (error) { return dataISO; }
         }
-        
-        /* FUNÇÃO 'gerarHtmlPremio' REMOVIDA */
 
         function criarCartaoBolao(bolao, index) {
-            // (Função simplificada, sem animações)
+            // (Função simplificada)
             const dataFormatada = formatarData(bolao.data_sorteio);
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
 
@@ -282,24 +277,13 @@
             </div>`;
         }
         
-        /* =============================================
-         * MUDANÇA: Nova função para mostrar o conteúdo
-         * =============================================
-        */
         function showContent() {
-            // 1. Esconde o overlay "ATENÇÃO" (inicia a animação de fade-out)
             overlayElement.classList.add("hidden");
-            
-            // 2. Mostra o container principal (inicia a animação de fade-in)
             containerElement.classList.add("loaded");
-
-            // 3. Calcula a rolagem (DEPOIS que a tela está visível)
-            // O 50ms é só para garantir que o navegador "respirou"
             setTimeout(verificarRolagem, 50);
         }
         
         function renderizarBoloes(boloes, onComplete) {
-            // Esta função SÓ renderiza o HTML, não mostra na tela
             if (!boloes || boloes.length === 0) {
                 listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
             } else {
@@ -309,13 +293,11 @@
                 });
                 listaBoloesElement.innerHTML = htmlBoloes;
             }
-            // Avisa que terminou
             onComplete();
         }
 
-        // --- Lógica "Cache-First" (Modificada) ---
+        // --- Lógica "Cache-First" ---
         async function carregarBoloes() {
-            // Marca o tempo de início
             const startTime = Date.now();
 
             if (!urlApiBoloes) {
@@ -336,20 +318,16 @@
                 } catch (e) { console.warn("Cache corrompido."); }
             }
 
-            // 2. Função "callback" que será chamada após os dados estarem prontos
+            // 2. Função "callback"
             const onDataReady = (dadosFinais) => {
-                // Renderiza o HTML *antes* de mostrar
                 renderizarBoloes(dadosFinais, () => {
-                    // Calcula quanto tempo já se passou
                     const elapsedTime = Date.now() - startTime;
                     const remainingTime = MINIMUM_SPLASH_TIME - elapsedTime;
                     
                     if (remainingTime > 0) {
-                        // Se o cache foi muito rápido, espera o tempo restante
                         console.log(`Dados prontos. Aguardando ${remainingTime}ms para fechar splash.`);
                         setTimeout(showContent, remainingTime);
                     } else {
-                        // Se a API demorou (ou é a primeira vez), mostra imediatamente
                         console.log("API demorou, mostrando conteúdo imediatamente.");
                         showContent();
                     }
@@ -383,7 +361,7 @@
             setInterval(atualizarEmBackground, 300000); // A cada 5 minutos
         }
         
-        // --- Nova Função de Atualização Silenciosa ---
+        // --- Atualização Silenciosa ---
         async function atualizarEmBackground() {
             if (!urlApiBoloes) return;
             console.log("Buscando atualização em segundo plano...");
@@ -421,14 +399,12 @@
                 });
                 
                 const alturaOriginal = alturaLista;
-                // Ajuste de velocidade (quanto menor o '25', mais rápido)
                 const duracao = (alturaOriginal / 1000) * 25; 
                 listaBoloesElement.style.animationDuration = `${duracao}s`;
                 listaBoloesElement.classList.add('scrolling');
                 
             } else {
                 console.log("Conteúdo cabe na tela. Centralizando.");
-                // Se não precisar rolar, centraliza
                 scrollerContainer.style.display = 'flex';
                 scrollerContainer.style.alignItems = 'center';
                 scrollerContainer.style.justifyContent = 'center';
