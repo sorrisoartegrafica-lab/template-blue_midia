@@ -6,7 +6,7 @@
     <title>Bolão Oficial - Loterias Caixa</title>
 
     <style>
-        /* Responsividade */
+        /* Responsividade (sem alteração) */
         html {
             font-size: 16px;
         }
@@ -63,6 +63,56 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
+        /* =============================================
+         * NOVO: Tela de Carregamento (Splash Screen)
+         * =============================================
+        */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0043C8; /* Mesmo fundo azul */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 1;
+            transition: opacity 0.5s ease-out; /* Transição de saída */
+        }
+        
+        #loading-overlay.hidden {
+            opacity: 0; /* JS vai adicionar isso para sumir */
+            pointer-events: none; /* Impede cliques */
+        }
+        
+        #loading-overlay h2 {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fde047; /* Amarelo Caixa */
+            margin: 0;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        #loading-overlay p {
+            font-size: 1.8rem;
+            font-weight: 300;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        /* --- Animação Container (DE VOLTA) --- */
+        @keyframes slide-in-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         /* --- Caixa Central Transparente --- */
         #main-content {
             width: 90%;
@@ -72,11 +122,22 @@
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            display: flex;
+            
+            /* ESCONDIDO POR PADRÃO, JS VAI MOSTRAR */
+            display: none; 
             flex-direction: column;
             overflow: hidden;
+            
+            opacity: 0; /* Começa invisível para animar */
             margin-bottom: 20px; 
         }
+
+        /* Classe que o JS vai adicionar para mostrar */
+        #main-content.loaded {
+            display: flex;
+            animation: slide-in-up 0.6s ease-out 0.2s forwards; /* 0.2s de delay */
+        }
+
 
         /* --- Scroller (Janela de rolagem) --- */
         #scroller-container {
@@ -90,12 +151,28 @@
             width: 100%;
         }
 
-        /* --- Animação de Rolagem --- */
+        /* --- Animações --- */
         @keyframes scroll-up {
             from { transform: translateY(0); }
             to { transform: translateY(-50%); }
         }
         .scrolling { animation: scroll-up linear infinite; }
+
+        /* ANIMAÇÕES DE ENTRADA DOS CARDS (DE VOLTA) */
+        @keyframes slide-in-left {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-in-right {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* ANIMAÇÃO DO TEXTO DO PRÊMIO (DE VOLTA) */
+        @keyframes flip-in {
+            0% { opacity: 0; transform: translateY(-20px) rotateX(70deg); }
+            100% { opacity: 1; transform: translateY(0) rotateX(0); }
+        }
 
         /* --- Layout do Cartão --- */
         .cartao-bolao {
@@ -103,6 +180,15 @@
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 25px;
+            opacity: 0; /* Começa invisível para animar */
+        }
+        
+        /* ANIMAÇÕES APLICADAS (COM DELAY) */
+        .slide-in-left { 
+            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;
+        }
+        .slide-in-right {
+            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;
         }
         
         .info-principal {
@@ -147,33 +233,48 @@
             font-size: 2.5rem;
             font-weight: 700;
             text-align: center;
+            perspective: 300px;
+            display: block;
+        }
+        /* ANIMAÇÃO APLICADA (DE VOLTA) */
+        .premio-valor .char {
+            display: inline-block;
+            opacity: 0;
+            animation: flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
     </style>
 </head>
 <body>
 
+    <div id="loading-overlay">
+        <h2>ATENÇÃO</h2>
+        <p>Jogue com responsabilidade. Participe apenas de bolões oficiais registrados e comercializados pela rede de lotéricas autorizadas da CAIXA.</p>
+    </div>
+
     <div id="container">
-        
         <header>
             <img src="https://mir-cdn.behance.net/v1/rendition/project_modules/max_158_webp/9082bf221455073.688a65570b90a.png" alt="Loterias Caixa">
             <h1>Bolão Oficial</h1>
         </header>
-
+        
         <div id="main-content">
             <div id="scroller-container">
                 <div id="boloes-lista">
                     </div>
             </div>
         </div>
-
     </div>
 
     <script>
-    
+        
         // --- Variáveis Globais ---
         const urlParams = new URLSearchParams(window.location.search);
         const urlApiBoloes = urlParams.get('api');
         const CACHE_KEY = `boloes_data_${urlApiBoloes}`;
+        
+        // NOVOS Seletores
+        const overlayElement = document.getElementById("loading-overlay");
+        const mainContentElement = document.getElementById("main-content");
         
         const containerElement = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
@@ -189,13 +290,28 @@
                 return `${dia}/${mes}/${ano}`;
             } catch (error) { return dataISO; }
         }
+        
+        /* FUNÇÃO 'gerarHtmlPremio' (DE VOLTA) */
+        function gerarHtmlPremio(textoPremio) {
+            // Delay inicial para esperar o card deslizar
+            const delayInicial = 0.8; // 0.5s do card + 0.3s delay
+            const delayPorChar = 0.04; 
 
+            return textoPremio.split('').map((char, index) => {
+                const delayTotal = delayInicial + (index * delayPorChar);
+                return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
+            }).join('');
+        }
+
+        /* FUNÇÃO 'criarCartaoBolao' (DE VOLTA) */
         function criarCartaoBolao(bolao, index) {
+            const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
             const dataFormatada = formatarData(bolao.data_sorteio);
+            const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
 
             return `
-            <div class="cartao-bolao" style="${styleVars}">
+            <div class="cartao-bolao ${animacaoClass}" style="${styleVars}">
                 <div class="info-principal" style="background-color: var(--cor-principal); border-left: 10px solid var(--cor-acento);">
                     <h2 class="bolao-nome">${bolao.nome}</h2>
                     <div class="bolao-detalhes">
@@ -207,54 +323,20 @@
                 <div class="info-premio" style="background-color: var(--cor-acento);">
                     <img src="${bolao.logo_url}" alt="Logo ${bolao.nome}">
                     <span class="premio-label">Último Sorteio</span>
-                    <span class="premio-valor">${bolao.ultimo_premio}</span>
+                    <span class="premio-valor">${htmlDoPremio}</span>
                 </div>
             </div>`;
         }
-
-        /**
-         * =============================================
-         * NOVA FUNÇÃO: Pré-carregar imagens
-         * =============================================
-        */
-        async function precarregarImagens(boloes) {
-            // Pega todos os links de logo, sem duplicatas
-            const urls = [...new Set(boloes.map(b => b.logo_url))];
-            
-            const promessas = urls.map(url => {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => resolve(url);
-                    img.onerror = () => reject(url);
-                    img.src = url;
-                });
-            });
-
-            // Espera todas as imagens serem baixadas
-            try {
-                await Promise.all(promessas);
-                console.log("Todas as imagens foram pré-carregadas.");
-            } catch (errorUrl) {
-                console.warn(`Falha ao pré-carregar a imagem: ${errorUrl}`);
-                // Continua mesmo se uma imagem falhar
-            }
-        }
         
-        /**
-         * =============================================
-         * MUDANÇA: 'renderizarBoloes' agora chama a função de pré-carregar
-         * =============================================
-        */
-        async function renderizarBoloes(boloes) {
+        function renderizarBoloes(boloes) {
             if (!boloes || boloes.length === 0) {
+                // Se não houver bolões, ainda escondemos o overlay
+                overlayElement.classList.add("hidden");
+                mainContentElement.classList.add("loaded");
                 listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
                 return;
             }
-
-            // 1. ANTES de mostrar, pré-carrega os logos
-            await precarregarImagens(boloes);
             
-            // 2. Agora que estão na memória, cria o HTML
             let htmlBoloes = "";
             boloes.forEach((bolao, index) => {
                 htmlBoloes += criarCartaoBolao(bolao, index);
@@ -264,14 +346,30 @@
             listaBoloesElement.classList.remove('scrolling');
             listaBoloesElement.style.animationDuration = '';
 
-            // 3. Verifica a rolagem (sem delay)
-            verificarRolagem(); 
+            /* =============================================
+             * MUDANÇA: Lógica de transição de telas
+             * =============================================
+            */
+            // 1. Esconde o overlay "ATENÇÃO" (inicia a animação de fade-out)
+            overlayElement.classList.add("hidden");
+            
+            // 2. Mostra o container principal (inicia a animação 'slide-in-up')
+            mainContentElement.classList.add("loaded");
+
+            /* =============================================
+             * MUDANÇA: 'setTimeout' (DE VOLTA)
+             * Precisamos esperar as animações de entrada terminarem
+             * (slide-in-up: 0.6s + slide-in-card: 0.7s = 1.3s)
+             * =============================================
+            */
+            setTimeout(verificarRolagem, 1500); // 1.5 segundos
         }
 
-        // --- Lógica "Cache-First" (Cache-then-network) ---
+        // --- Lógica "Cache-First" (Sem alteração) ---
         async function carregarBoloes() {
             if (!urlApiBoloes) {
-                listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro: API não definida.</p>";
+                // Se a API não for definida, mostre o erro na tela de loading
+                overlayElement.innerHTML = "<h2>ERRO</h2><p>Erro de configuração: A API não foi definida na URL.</p>";
                 return;
             }
 
@@ -283,7 +381,7 @@
                 try {
                     console.log("Carregando dados do cache local...");
                     const boloes = JSON.parse(cachedDataString);
-                    await renderizarBoloes(boloes); // Renderiza INSTANTANEAMENTE (com pré-carga)
+                    renderizarBoloes(boloes); // Renderiza INSTANTANEAMENTE
                     cacheValido = true;
                 } catch (e) {
                     console.warn("Cache corrompido, limpando.");
@@ -302,7 +400,7 @@
 
                 if (boloesNovosString !== cachedDataString) {
                     console.log("Novos dados encontrados. Atualizando tela e cache.");
-                    await renderizarBoloes(boloesNovos); // Re-renderiza com dados novos (com pré-carga)
+                    renderizarBoloes(boloesNovos); // Re-renderiza com dados novos
                     localStorage.setItem(CACHE_KEY, boloesNovosString);
                 } else {
                     console.log("Dados do cache já estão atualizados.");
@@ -311,12 +409,12 @@
             } catch (error) {
                 console.warn("Falha ao buscar API (offline?).", error.message);
                 if (!cacheValido) {
-                    listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro de conexão. Sem cache.</p>";
+                    overlayElement.innerHTML = "<h2>ERRO</h2><p>Erro de conexão. Não foi possível carregar os dados.</p>";
                 }
             }
         }
         
-        // --- Função de Rolagem (Sem "piscar") ---
+        // --- Função de Rolagem (Sem "piscar") (Sem alteração) ---
         function verificarRolagem() {
             const alturaContainer = containerElement.clientHeight;
             const alturaLista = listaBoloesElement.scrollHeight;
@@ -345,7 +443,7 @@
 
         // --- Execução ---
         carregarBoloes(); 
-        setInterval(carregarBoloes, 300000); // Tenta atualizar a cada 5 minutos
+        setInterval(carregarBoloes, 300000); 
 
     </script>
 </body>
