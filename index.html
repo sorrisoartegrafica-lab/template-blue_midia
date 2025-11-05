@@ -6,7 +6,7 @@
     <title>Bolão Oficial - Loterias Caixa</title>
 
     <style>
-        /* Responsividade */
+        /* Responsividade (sem alteração) */
         html {
             font-size: 16px;
         }
@@ -63,12 +63,6 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* --- Animação Container --- */
-        @keyframes slide-in-up {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
         /* --- Caixa Central Transparente --- */
         #main-content {
             width: 90%;
@@ -81,7 +75,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            animation: slide-in-up 0.6s ease-out forwards;
+            /* ANIMAÇÃO 'slide-in-up' REMOVIDA DAQUI */
             margin-bottom: 20px; 
         }
 
@@ -97,25 +91,12 @@
             width: 100%;
         }
 
-        /* --- Animações --- */
+        /* --- Animação de Rolagem --- */
         @keyframes scroll-up {
             from { transform: translateY(0); }
             to { transform: translateY(-50%); }
         }
         .scrolling { animation: scroll-up linear infinite; }
-
-        @keyframes slide-in-left {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slide-in-right {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes flip-in {
-            0% { opacity: 0; transform: translateY(-20px) rotateX(70deg); }
-            100% { opacity: 1; transform: translateY(0) rotateX(0); }
-        }
 
         /* --- Layout do Cartão --- */
         .cartao-bolao {
@@ -123,14 +104,7 @@
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 25px;
-            opacity: 0; 
-        }
-        
-        .slide-in-left { 
-            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-        .slide-in-right {
-            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            /* ANIMAÇÕES 'slide-in' REMOVIDAS DAQUI */
         }
         
         .info-principal {
@@ -170,17 +144,12 @@
         }
         .info-premio img { width: 150px; height: auto; margin-bottom: 10px; }
         .premio-label { font-size: 1.2rem; font-weight: 300; }
+        
+        /* ANIMAÇÃO 'flip-in' REMOVIDA DAQUI */
         .premio-valor {
             font-size: 2.5rem;
             font-weight: 700;
             text-align: center;
-            perspective: 300px;
-            display: block;
-        }
-        .premio-valor .char {
-            display: inline-block;
-            opacity: 0;
-            animation: flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
     </style>
 </head>
@@ -204,7 +173,7 @@
         // --- Variáveis Globais ---
         const urlParams = new URLSearchParams(window.location.search);
         const urlApiBoloes = urlParams.get('api');
-        const CACHE_KEY = `boloes_data_${urlApiBoloes}`; // Chave de cache única por cliente
+        const CACHE_KEY = `boloes_data_${urlApiBoloes}`;
         
         const containerElement = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
@@ -221,29 +190,16 @@
             } catch (error) { return dataISO; }
         }
 
-        function gerarHtmlPremio(textoPremio) {
-            /* =============================================
-             * MUDANÇA: Delay do texto RÁPIDO
-             * =============================================
-            */
-            const delayInicial = 0.1; // Quase imediato
-            const delayPorChar = 0.04; 
-
-            return textoPremio.split('').map((char, index) => {
-                const delayTotal = delayInicial + (index * delayPorChar);
-                return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
-            }).join('');
-        }
+        /* FUNÇÃO 'gerarHtmlPremio' REMOVIDA - NÃO É MAIS NECESSÁRIA */
 
         function criarCartaoBolao(bolao, index) {
-            // (Função sem alteração)
-            const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
+            // 'animacaoClass' REMOVIDA
             const dataFormatada = formatarData(bolao.data_sorteio);
-            const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
+            // 'htmlDoPremio' REMOVIDO
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
 
             return `
-            <div class="cartao-bolao ${animacaoClass}" style="${styleVars}">
+            <div class="cartao-bolao" style="${styleVars}">
                 <div class="info-principal" style="background-color: var(--cor-principal); border-left: 10px solid var(--cor-acento);">
                     <h2 class="bolao-nome">${bolao.nome}</h2>
                     <div class="bolao-detalhes">
@@ -255,7 +211,8 @@
                 <div class="info-premio" style="background-color: var(--cor-acento);">
                     <img src="${bolao.logo_url}" alt="Logo ${bolao.nome}">
                     <span class="premio-label">Último Sorteio</span>
-                    <span class="premio-valor">${htmlDoPremio}</span>
+                    
+                    <span class="premio-valor">${bolao.ultimo_premio}</span>
                 </div>
             </div>`;
         }
@@ -276,18 +233,14 @@
             listaBoloesElement.style.animationDuration = '';
 
             /* =============================================
-             * MUDANÇA: Delay da rolagem RÁPIDO (era 800ms)
+             * MUDANÇA: 'setTimeout' REMOVIDO!
+             * A verificação agora é imediata, corrigindo a "tremida".
              * =============================================
             */
-            // Espera a animação de "subida" (0.6s) terminar
-            setTimeout(verificarRolagem, 650); 
+            verificarRolagem(); 
         }
 
-        /**
-         * =============================================
-         * MUDANÇA: Lógica "Cache-First" (Stale-While-Revalidate)
-         * =============================================
-         */
+        // --- Lógica "Cache-First" (Sem alteração) ---
         async function carregarBoloes() {
             if (!urlApiBoloes) {
                 listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro: API não definida.</p>";
@@ -302,7 +255,7 @@
                 try {
                     console.log("Carregando dados do cache local...");
                     const boloes = JSON.parse(cachedDataString);
-                    renderizarBoloes(boloes);
+                    renderizarBoloes(boloes); // Renderiza INSTANTANEAMENTE
                     cacheValido = true;
                 } catch (e) {
                     console.warn("Cache corrompido, limpando.");
@@ -319,7 +272,6 @@
                 const boloesNovos = await response.json();
                 const boloesNovosString = JSON.stringify(boloesNovos);
 
-                // Compara com o cache. Só atualiza a tela se for diferente.
                 if (boloesNovosString !== cachedDataString) {
                     console.log("Novos dados encontrados. Atualizando tela e cache.");
                     renderizarBoloes(boloesNovos); // Re-renderiza com dados novos
@@ -330,19 +282,19 @@
 
             } catch (error) {
                 console.warn("Falha ao buscar API (offline?).", error.message);
-                // Se falhou a rede, E o cache não era válido...
                 if (!cacheValido) {
                     listaBoloesElement.innerHTML = "<p style='color: #f87171;'>Erro de conexão. Sem cache.</p>";
                 }
-                // Se o cache era válido, não faz nada, deixa o cache na tela.
             }
         }
         
+        // --- Função de Rolagem (Sem "piscar") (Sem alteração) ---
         function verificarRolagem() {
-            // (Função de rolagem sem "piscar" - sem alteração)
             const alturaContainer = containerElement.clientHeight;
             const alturaLista = listaBoloesElement.scrollHeight;
             
+            console.log("Verificando rolagem. Container:", alturaContainer, "Lista:", alturaLista);
+
             if (alturaLista > alturaContainer) {
                 console.log("Conteúdo maior que a tela. Ativando rolagem.");
                 const children = Array.from(listaBoloesElement.children);
@@ -364,8 +316,8 @@
         }
 
         // --- Execução ---
-        carregarBoloes(); // Carrega (cache-first) na primeira vez
-        setInterval(carregarBoloes, 300000); // Tenta atualizar a cada 5 minutos
+        carregarBoloes(); 
+        setInterval(carregarBoloes, 300000); 
 
     </script>
 </body>
