@@ -25,44 +25,6 @@
             background-color: #0043C8;
         }
 
-        /* --- Container principal --- */
-        #container {
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center; 
-        }
-
-        /* --- Cabeçalho da Caixa --- */
-        header {
-            width: 100%; 
-            text-align: center;
-            margin-bottom: 20px;
-            flex-shrink: 0;
-            color: #ffffff;
-            padding-top: 20px; 
-            box-sizing: border-box; 
-            background-image: 
-                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%),
-                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-        }
-
-        header img {
-            max-width: 180px;
-        }
-
-        header h1 {
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin: 5px 0 0 0;
-            text-transform: uppercase;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
         /* --- Tela de Carregamento (Splash Screen) --- */
         #loading-overlay {
             position: fixed;
@@ -70,7 +32,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #0043C8; /* Mesmo fundo azul */
+            background-color: #0043C8;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -105,10 +67,49 @@
             margin-top: 20px;
         }
 
-        /* --- Animação Container (slide-in-up) --- */
-        @keyframes slide-in-up {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        /* --- Container principal --- */
+        #container {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            /* Começa invisível, aparece quando o loading some */
+            opacity: 0;
+            transition: opacity 0.5s ease-in 0.3s; /* Delay para esperar o loading sumir */
+        }
+        
+        #container.loaded {
+            opacity: 1;
+        }
+
+        /* --- Cabeçalho da Caixa --- */
+        header {
+            width: 100%; 
+            text-align: center;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+            color: #ffffff;
+            padding-top: 20px; 
+            box-sizing: border-box; 
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%),
+                radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        header img {
+            max-width: 100%;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 5px 0 0 0;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         /* --- Caixa Central Transparente --- */
@@ -120,21 +121,12 @@
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            
-            display: flex; /* <-- Mudança: Começa como flex */
-            visibility: hidden; /* <-- Mudança: Começa invisível */
-            
+            display: flex;
             flex-direction: column;
             overflow: hidden;
             margin-bottom: 20px; 
+            /* ANIMAÇÃO 'slide-in-up' REMOVIDA */
         }
-
-        /* Classe que o JS vai adicionar para mostrar */
-        #main-content.loaded {
-            visibility: visible; /* <-- Torna visível */
-            animation: slide-in-up 0.6s ease-out forwards;
-        }
-
 
         /* --- Scroller (Janela de rolagem) --- */
         #scroller-container {
@@ -148,32 +140,14 @@
             width: 100%;
         }
 
-        /* --- Animações --- */
+        /* --- Animação de Rolagem --- */
         @keyframes scroll-up {
             from { transform: translateY(0); }
             to { transform: translateY(-50%); }
         }
-        /* Ajuste para suavizar a "tremida" */
         .scrolling { 
             animation: scroll-up linear infinite; 
-            /* Força a aceleração de hardware */
             transform: translate3d(0, 0, 0); 
-        }
-
-        /* Animações de entrada dos cards */
-        @keyframes slide-in-left {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slide-in-right {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* Animação do texto do prêmio */
-        @keyframes flip-in {
-            0% { opacity: 0; transform: translateY(-20px) rotateX(70deg); }
-            100% { opacity: 1; transform: translateY(0) rotateX(0); }
         }
 
         /* --- Layout do Cartão --- */
@@ -182,15 +156,7 @@
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 25px;
-            opacity: 0; /* Começa invisível para animar */
-        }
-        
-        /* Animações aplicadas (com delay) */
-        .slide-in-left { 
-            animation: slide-in-left 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
-        }
-        .slide-in-right {
-            animation: slide-in-right 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+            /* ANIMAÇÕES DE 'slide-in' REMOVIDAS */
         }
         
         .info-principal {
@@ -235,13 +201,7 @@
             font-size: 2.5rem;
             font-weight: 700;
             text-align: center;
-            perspective: 300px;
-            display: block;
-        }
-        .premio-valor .char {
-            display: inline-block;
-            opacity: 0;
-            animation: flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            /* ANIMAÇÃO 'flip-in' REMOVIDA */
         }
     </style>
 </head>
@@ -274,16 +234,16 @@
         const CACHE_KEY = `boloes_data_${urlApiBoloes}`;
         
         const overlayElement = document.getElementById("loading-overlay");
-        const mainContentElement = document.getElementById("main-content");
+        const containerElement = document.getElementById("container"); // MUDOU: Agora é o container principal
         
-        const containerElement = document.getElementById("scroller-container");
+        const scrollerContainer = document.getElementById("scroller-container");
         const listaBoloesElement = document.getElementById("boloes-lista");
 
         /* =============================================
          * MUDANÇA: Tempo mínimo da tela de ATENÇÃO
          * =============================================
         */
-        const MINIMUM_SPLASH_TIME = 2500; // 2.5 segundos
+        const MINIMUM_SPLASH_TIME = 3000; // 3 segundos (3000ms)
         
         // --- Funções de Renderização (Helpers) ---
         
@@ -297,30 +257,15 @@
             } catch (error) { return dataISO; }
         }
         
-        function gerarHtmlPremio(textoPremio) {
-            /* =============================================
-             * MUDANÇA: Delay da animação de texto
-             * =============================================
-            */
-            // Delay inicial (caixa sobe 0.6s, card desliza 0.3s)
-            const delayInicial = 1.0; 
-            const delayPorChar = 0.04; 
-
-            return textoPremio.split('').map((char, index) => {
-                const delayTotal = delayInicial + (index * delayPorChar);
-                return `<span class="char" style="animation-delay: ${delayTotal}s">${(char === ' ' ? '&nbsp;' : char)}</span>`;
-            }).join('');
-        }
+        /* FUNÇÃO 'gerarHtmlPremio' REMOVIDA */
 
         function criarCartaoBolao(bolao, index) {
-            // (Função sem alteração)
-            const animacaoClass = (index % 2 === 0) ? 'slide-in-right' : 'slide-in-left';
+            // (Função simplificada, sem animações)
             const dataFormatada = formatarData(bolao.data_sorteio);
-            const htmlDoPremio = gerarHtmlPremio(bolao.ultimo_premio);
             const styleVars = `--cor-principal: ${bolao.cor_principal}; --cor-acento: ${bolao.cor_acento};`;
 
             return `
-            <div class="cartao-bolao ${animacaoClass}" style="${styleVars}">
+            <div class="cartao-bolao" style="${styleVars}">
                 <div class="info-principal" style="background-color: var(--cor-principal); border-left: 10px solid var(--cor-acento);">
                     <h2 class="bolao-nome">${bolao.nome}</h2>
                     <div class="bolao-detalhes">
@@ -332,7 +277,7 @@
                 <div class="info-premio" style="background-color: var(--cor-acento);">
                     <img src="${bolao.logo_url}" alt="Logo ${bolao.nome}">
                     <span class="premio-label">Último Sorteio</span>
-                    <span class="premio-valor">${htmlDoPremio}</span>
+                    <span class="premio-valor">${bolao.ultimo_premio}</span>
                 </div>
             </div>`;
         }
@@ -345,15 +290,16 @@
             // 1. Esconde o overlay "ATENÇÃO" (inicia a animação de fade-out)
             overlayElement.classList.add("hidden");
             
-            // 2. Mostra o container principal (inicia a animação 'slide-in-up')
-            mainContentElement.classList.add("loaded");
+            // 2. Mostra o container principal (inicia a animação de fade-in)
+            containerElement.classList.add("loaded");
 
-            // 3. Calcula a rolagem (DEPOIS que a animação de slide-in começar)
-            setTimeout(verificarRolagem, 800); // Espera 0.8s
+            // 3. Calcula a rolagem (DEPOIS que a tela está visível)
+            // O 50ms é só para garantir que o navegador "respirou"
+            setTimeout(verificarRolagem, 50);
         }
         
         function renderizarBoloes(boloes, onComplete) {
-            // Esta função agora SÓ renderiza o HTML, não mostra na tela
+            // Esta função SÓ renderiza o HTML, não mostra na tela
             if (!boloes || boloes.length === 0) {
                 listaBoloesElement.innerHTML = "<p style='color: white;'>Nenhum bolão cadastrado.</p>";
             } else {
@@ -363,7 +309,6 @@
                 });
                 listaBoloesElement.innerHTML = htmlBoloes;
             }
-            
             // Avisa que terminou
             onComplete();
         }
@@ -393,6 +338,7 @@
 
             // 2. Função "callback" que será chamada após os dados estarem prontos
             const onDataReady = (dadosFinais) => {
+                // Renderiza o HTML *antes* de mostrar
                 renderizarBoloes(dadosFinais, () => {
                     // Calcula quanto tempo já se passou
                     const elapsedTime = Date.now() - startTime;
@@ -403,7 +349,7 @@
                         console.log(`Dados prontos. Aguardando ${remainingTime}ms para fechar splash.`);
                         setTimeout(showContent, remainingTime);
                     } else {
-                        // Se a API demorou, mostra imediatamente
+                        // Se a API demorou (ou é a primeira vez), mostra imediatamente
                         console.log("API demorou, mostrando conteúdo imediatamente.");
                         showContent();
                     }
@@ -420,9 +366,7 @@
                 const boloesNovosString = JSON.stringify(boloesNovos);
 
                 console.log("Dados novos da API recebidos.");
-                // Salva os novos dados no cache
                 localStorage.setItem(CACHE_KEY, boloesNovosString);
-                // Define os dados novos como os que devem ser renderizados
                 dadosParaRenderizar = boloesNovos;
 
             } catch (error) {
@@ -430,7 +374,6 @@
                 if (!cacheValido) {
                     overlayElement.innerHTML = "<h2>ERRO</h2><p>Erro de conexão. Não foi possível carregar os dados.</p>";
                 }
-                // Se falhou, dadosParaRenderizar continua sendo o do cache (ou nulo)
             }
             
             // 4. Renderiza o que tiver (cache ou dados novos)
@@ -442,8 +385,7 @@
         
         // --- Nova Função de Atualização Silenciosa ---
         async function atualizarEmBackground() {
-            if (!urlApiBoloes) return; // Sai se não tiver API
-            
+            if (!urlApiBoloes) return;
             console.log("Buscando atualização em segundo plano...");
             try {
                 const response = await fetch(urlApiBoloes);
@@ -454,10 +396,7 @@
                 const cachedDataString = localStorage.getItem(CACHE_KEY);
 
                 if (boloesNovosString !== cachedDataString) {
-                    // Encontrou dados novos!
                     console.log("Dados novos encontrados em background. Recarregando a página...");
-                    // A forma mais segura de atualizar os cards e reiniciar a animação
-                    // é simplesmente recarregar a página.
                     window.location.reload();
                 } else {
                     console.log("Dados em background já estão atualizados.");
@@ -469,39 +408,34 @@
         
         // --- Função de Rolagem (Sem "piscar") ---
         function verificarRolagem() {
-            // Esta função só é chamada DEPOIS que a tela de loading sumiu
-            // e o #main-content está visível.
+            const alturaContainer = scrollerContainer.clientHeight;
+            const alturaLista = listaBoloesElement.scrollHeight;
             
-            // Pequeno delay para garantir que o CSS 'display: flex' foi aplicado
-            setTimeout(() => {
-                const alturaContainer = containerElement.clientHeight;
-                const alturaLista = listaBoloesElement.scrollHeight;
-                
-                console.log("Verificando rolagem. Container:", alturaContainer, "Lista:", alturaLista);
+            console.log("Verificando rolagem. Container:", alturaContainer, "Lista:", alturaLista);
 
-                if (alturaLista > alturaContainer) {
-                    console.log("Conteúdo maior que a tela. Ativando rolagem.");
-                    const children = Array.from(listaBoloesElement.children);
-                    children.forEach(child => {
-                        listaBoloesElement.appendChild(child.cloneNode(true));
-                    });
-                    
-                    const alturaOriginal = alturaLista;
-                    const duracao = (alturaOriginal / 1000) * 25; 
-                    listaBoloesElement.style.animationDuration = `${duracao}s`;
-                    listaBoloesElement.classList.add('scrolling');
-                    
-                } else {
-                    console.log("Conteúdo cabe na tela. Centralizando.");
-                    containerElement.style.display = 'flex';
-                    containerElement.style.alignItems = 'center';
-                    containerElement.style.justifyContent = 'center';
-                }
-            }, 50); // 50ms de delay
+            if (alturaLista > alturaContainer) {
+                console.log("Conteúdo maior que a tela. Ativando rolagem.");
+                const children = Array.from(listaBoloesElement.children);
+                children.forEach(child => {
+                    listaBoloesElement.appendChild(child.cloneNode(true));
+                });
+                
+                const alturaOriginal = alturaLista;
+                // Ajuste de velocidade (quanto menor o '25', mais rápido)
+                const duracao = (alturaOriginal / 1000) * 25; 
+                listaBoloesElement.style.animationDuration = `${duracao}s`;
+                listaBoloesElement.classList.add('scrolling');
+                
+            } else {
+                console.log("Conteúdo cabe na tela. Centralizando.");
+                // Se não precisar rolar, centraliza
+                scrollerContainer.style.display = 'flex';
+                scrollerContainer.style.alignItems = 'center';
+                scrollerContainer.style.justifyContent = 'center';
+            }
         }
 
         // --- Execução ---
-        // Apenas UMA chamada é feita. O 'setInterval' foi movido.
         carregarBoloes(); 
 
     </script>
